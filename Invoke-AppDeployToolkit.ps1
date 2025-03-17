@@ -93,17 +93,17 @@ param
 
 $adtSession = @{
     # App variables.
-    AppVendor = ''
-    AppName = ''
-    AppVersion = ''
-    AppArch = ''
-    AppLang = ''
-    AppRevision = ''
+    AppVendor = 'Poppulo'
+    AppName = 'Content Player'
+    AppVersion = '6.5.1.15605'
+    AppArch = 'x64'
+    AppLang = 'EN'
+    AppRevision = '01'
     AppSuccessExitCodes = @(0)
     AppRebootExitCodes = @(1641, 3010)
     AppScriptVersion = '1.0.0'
-    AppScriptDate = 'YYYY-M-D'
-    AppScriptAuthor = ''
+    AppScriptDate = '2025-3-12'
+    AppScriptAuthor = 'Sebastian Bickford'
 
     # Install Titles (Only set here to override defaults set by the toolkit).
     InstallName = ''
@@ -122,8 +122,8 @@ function Install-ADTDeployment
     ##================================================
     $adtSession.InstallPhase = "Pre-$($adtSession.DeploymentType)"
 
-    ## Show Welcome Message, close Internet Explorer and any other processes if required, allow up to 3 deferrals, verify there is enough disk space to complete the install, and persist the prompt.
-    Show-ADTInstallationWelcome -CloseProcesses iexplore -CheckDiskSpace -PersistPrompt
+    ## Show Welcome Message, close Internet Explorer if required, allow up to 3 deferrals, verify there is enough disk space to complete the install, and persist the prompt.
+    Show-ADTInstallationWelcome -CloseProcesses signage, contentplayermonitor, contentplayerservice -CheckDiskSpace -PersistPrompt
 
     ## Show Progress Message (with the default message).
     Show-ADTInstallationProgress
@@ -152,7 +152,7 @@ function Install-ADTDeployment
     }
 
     ## <Perform Installation tasks here>
-
+    Start-ADTProcess -FilePath "$($adtSession.DirFiles)\Content Player Setup.exe" -ArgumentList '/install /quiet /norestart'
 
     ##================================================
     ## MARK: Post-Install
@@ -160,6 +160,10 @@ function Install-ADTDeployment
     $adtSession.InstallPhase = "Post-$($adtSession.DeploymentType)"
 
     ## <Perform Post-Installation tasks here>
+    # Copies file that kills explorer on login
+    Copy-ADTFile -Path "$($adtSession.DirSupportFiles)\_signage.bat" -Destination "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+    # Copies file that starts Content Player
+	Copy-ADTFile -Path "$($adtSession.DirSupportFiles)\Content Player.lnk" -Destination "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
 
     ## Display a message at the end of the install.
     #if (!$adtSession.UseDefaultMsi)
@@ -175,8 +179,8 @@ function Uninstall-ADTDeployment
     ##================================================
     $adtSession.InstallPhase = "Pre-$($adtSession.DeploymentType)"
 
-    ## Show Welcome Message, close Internet Explorer with a 60 second countdown before automatically closing. Add other processes that may need to quit here.
-    Show-ADTInstallationWelcome -CloseProcesses iexplore -PersistPrompt
+    ## Show Welcome Message, close Internet Explorer with a 60 second countdown before automatically closing.
+    Show-ADTInstallationWelcome -CloseProcesses signage, contentplayermonitor, contentplayerservice -PersistPrompt
 
     ## Show Progress Message (with the default message).
     Show-ADTInstallationProgress
@@ -201,7 +205,7 @@ function Uninstall-ADTDeployment
     }
 
     ## <Perform Uninstallation tasks here>
-
+    Start-ADTProcess -FilePath "$($adtSession.DirFiles)\Content Player Setup.exe" -ArgumentList '/uninstall /quiet /norestart'
 
     ##================================================
     ## MARK: Post-Uninstallation
@@ -209,8 +213,8 @@ function Uninstall-ADTDeployment
     $adtSession.InstallPhase = "Post-$($adtSession.DeploymentType)"
 
     ## <Perform Post-Uninstallation tasks here>
-    
-
+    Remove-Item -Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\_signage.bat" -Force
+    Remove-Item -Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\Content Player.lnk" -Force
 }
 
 function Repair-ADTDeployment
